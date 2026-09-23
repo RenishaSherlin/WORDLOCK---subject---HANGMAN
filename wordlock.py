@@ -1,7 +1,16 @@
 import random
 
+# ============================================================
+#                    WORDLOCK
+#             SUBJECT CHALLENGE HANGMAN
+# ============================================================
+
 LEADERBOARD_FILE = "leaderboard.txt"
 
+
+# ============================================================
+#                    LEADERBOARD
+# ============================================================
 
 def load_scores():
     scores = []
@@ -13,8 +22,19 @@ def load_scores():
             line = line.strip()
 
             if line:
-                name, score = line.split(",")
-                scores.append([name, int(score)])
+                parts = line.split(",")
+
+                if len(parts) == 3:
+                    name = parts[0]
+                    subject = parts[1]
+                    score = int(parts[2])
+                    scores.append([name, subject, score])
+
+                elif len(parts) == 2:
+                    # Supports older leaderboard entries
+                    name = parts[0]
+                    score = int(parts[1])
+                    scores.append([name, "Unknown", score])
 
         file.close()
 
@@ -24,235 +44,64 @@ def load_scores():
     return scores
 
 
-def save_score(name, score):
+def save_score(name, subject, score):
     file = open(LEADERBOARD_FILE, "a")
-    file.write(name + "," + str(score) + "\n")
+
+    name = name.replace(",", " ")
+    subject = subject.replace(",", " ")
+
+    file.write(name + "," + subject + "," + str(score) + "\n")
+
     file.close()
 
 
 def show_leaderboard():
     scores = load_scores()
 
-    scores.sort(key=lambda x: x[1], reverse=True)
+    scores.sort(key=lambda x: x[2], reverse=True)
 
-    print("\n" + "=" * 40)
-    print("          🏆 LEADERBOARD")
-    print("=" * 40)
+    print("\n" + "-" * 60)
+    print("                    🏆 LEADERBOARD")
+    print("-" * 60)
 
     if len(scores) == 0:
         print("No scores yet!")
 
     else:
-        for i, player in enumerate(scores[:5], start=1):
-            print(i, ".", player[0], "-", player[1])
+        for i, player in enumerate(scores[:10], start=1):
+            print(
+                str(i) + ". " +
+                player[0] +
+                " | " +
+                player[1] +
+                " | " +
+                str(player[2])
+            )
 
-    print("=" * 40)
-
-# ============================================================
-#                 WORDLOCK - SUBJECT HANGMAN
-# ============================================================
-print( )
-print("💀" * 22)
-print( )
-print("              🔐 WORDLOCK")
-print("        SUBJECT CHALLENGE HANGMAN")
-print( )
-print("💀" * 22)
-
-print("\nWelcome to WORDLOCK!")
-print("Choose a subject and test your knowledge.")
-print("Answer the question, use the clue, and guess the hidden word!")
-
-# ============================================================
-#                     QUESTION DATA
-# ============================================================
-
-subjects = {
-
-    "1": {
-        "name": "Computer Science",
-        "words": [
-            {
-                "word": "python",
-                "question": "Which programming language is commonly used for this project?",
-                "hint": "It is named after a type of snake."
-            },
-            {
-                "word": "algorithm",
-                "question": "What do we call a step-by-step procedure for solving a problem?",
-                "hint": "It is commonly used in computer science."
-            },
-            {
-                "word": "variable",
-                "question": "What stores a value that can change during program execution?",
-                "hint": "It has a name and stores data."
-            },
-            {
-                "word": "function",
-                "question": "What is a reusable block of code that performs a specific task?",
-                "hint": "In Python, it can be created using 'def'."
-            },
-            {
-                "word": "computer",
-                "question": "What electronic device processes data and executes programs?",
-                "hint": "You are probably using one right now."
-            },
-            {
-                "word": "database",
-                "question": "What is an organized collection of data called?",
-                "hint": "Websites often use one to store user information."
-            }
-        ]
-    },
-
-    "2": {
-        "name": "Biology",
-        "words": [
-            {
-                "word": "mitochondria",
-                "question": "Which organelle is commonly called the powerhouse of the cell?",
-                "hint": "It produces much of the cell's usable energy."
-            },
-            {
-                "word": "photosynthesis",
-                "question": "What process allows plants to make food using light?",
-                "hint": "It occurs mainly in chloroplasts."
-            },
-            {
-                "word": "chromosome",
-                "question": "Where is genetic information packaged inside a cell?",
-                "hint": "Humans normally have 46 of them."
-            },
-            {
-                "word": "neuron",
-                "question": "What specialized cell transmits nerve signals?",
-                "hint": "It is part of the nervous system."
-            },
-            {
-                "word": "protein",
-                "question": "What biological molecule is made from amino acids?",
-                "hint": "It performs many structural and functional roles."
-            },
-            {
-                "word": "osmosis",
-                "question": "What is the movement of water through a selectively permeable membrane?",
-                "hint": "It involves movement of water toward higher solute concentration."
-            }
-        ]
-    },
-
-    "3": {
-        "name": "Chemistry",
-        "words": [
-            {
-                "word": "molecule",
-                "question": "What is formed when two or more atoms chemically bond?",
-                "hint": "Water is an example."
-            },
-            {
-                "word": "element",
-                "question": "What substance contains only one type of atom?",
-                "hint": "Oxygen and gold are examples."
-            },
-            {
-                "word": "reaction",
-                "question": "What process changes reactants into products?",
-                "hint": "It can produce new substances."
-            },
-            {
-                "word": "catalyst",
-                "question": "What speeds up a chemical reaction without being consumed?",
-                "hint": "It lowers the activation energy."
-            },
-            {
-                "word": "atom",
-                "question": "What is the basic unit of an element?",
-                "hint": "It contains protons, neutrons and electrons."
-            },
-            {
-                "word": "compound",
-                "question": "What substance contains two or more different elements chemically bonded?",
-                "hint": "Water is a common example."
-            }
-        ]
-    },
-
-    "4": {
-        "name": "Mathematics",
-        "words": [
-            {
-                "word": "algebra",
-                "question": "Which branch of mathematics uses symbols and letters to represent values?",
-                "hint": "You may solve for x in this topic."
-            },
-            {
-                "word": "calculus",
-                "question": "Which branch studies derivatives and integrals?",
-                "hint": "It includes differentiation and integration."
-            },
-            {
-                "word": "matrix",
-                "question": "What rectangular arrangement of numbers is used in linear algebra?",
-                "hint": "It has rows and columns."
-            },
-            {
-                "word": "geometry",
-                "question": "Which branch studies shapes, sizes and properties of space?",
-                "hint": "Triangles and circles are important here."
-            },
-            {
-                "word": "integer",
-                "question": "What do we call whole numbers including positive, negative and zero?",
-                "hint": "Examples include -3, 0 and 7."
-            },
-            {
-                "word": "equation",
-                "question": "What mathematical statement shows that two expressions are equal?",
-                "hint": "It normally contains an equals sign."
-            }
-        ]
-    },
-
-    "5": {
-        "name": "General Science",
-        "words": [
-            {
-                "word": "gravity",
-                "question": "What force attracts objects toward one another?",
-                "hint": "It keeps us on Earth's surface."
-            },
-            {
-                "word": "planet",
-                "question": "What type of celestial body orbits a star?",
-                "hint": "Earth is one."
-            },
-            {
-                "word": "energy",
-                "question": "What is the capacity to do work?",
-                "hint": "It exists in many forms such as kinetic and potential."
-            },
-            {
-                "word": "radiation",
-                "question": "How can energy travel through space as electromagnetic waves or particles?",
-                "hint": "Sunlight reaches Earth this way."
-            },
-            {
-                "word": "magnet",
-                "question": "What object produces a magnetic field and attracts certain metals?",
-                "hint": "It has north and south poles."
-            },
-            {
-                "word": "electricity",
-                "question": "What phenomenon involves the movement or presence of electric charge?",
-                "hint": "It powers many electronic devices."
-            }
-        ]
-    }
-}
+    print("=" * 60)
 
 
 # ============================================================
-#                     HANGMAN DRAWINGS
+#                    RANK SYSTEM
+# ============================================================
+
+def get_rank(score):
+
+    if score >= 600:
+        return "🏆 WORDLOCK MASTER"
+
+    elif score >= 400:
+        return "🥇 EXPERT PLAYER"
+
+    elif score >= 200:
+        return "🥈 SKILLED PLAYER"
+
+    else:
+        return "🥉 ROOKIE PLAYER"
+
+
+# ============================================================
+#                    HANGMAN DRAWINGS
 # ============================================================
 
 hangman = [
@@ -312,7 +161,7 @@ hangman = [
       |       |
       |       O
       |      /|\\
-      |      /
+      |      / \
       |
    ___|___
 """
@@ -320,34 +169,593 @@ hangman = [
 
 
 # ============================================================
-#                     SUBJECT SELECTION
+#                    SUBJECT DATA
 # ============================================================
 
-print("\n📚 AVAILABLE SUBJECTS")
-print("-" * 40)
-print("1. 💻 Computer Science")
-print("2. 🧬 Biology")
-print("3. 🧪 Chemistry")
-print("4. 📐 Mathematics")
-print("5. 🌌 General Science")
+subjects = {
 
-while True:
+    "1": {
+        "name": "Computer Science",
 
-    subject_choice = input("\nChoose your favourite subject (1-5): ")
+        "words": [
 
-    if subject_choice in subjects:
-        break
+            {
+                "word": "python",
+                "difficulty": "Easy",
+                "question": "Which keyword is used to define a function in Python?",
+                "options": ["A) function", "B) def", "C) func", "D) define"],
+                "answer": "B"
+            },
 
-    print("❌ Invalid choice. Please enter a number from 1 to 5.")
+            {
+                "word": "variable",
+                "difficulty": "Easy",
+                "question": "Which symbol is commonly used to assign a value to a variable in Python?",
+                "options": ["A) =", "B) ==", "C) ->", "D) :="],
+                "answer": "A"
+            },
+
+            {
+                "word": "algorithm",
+                "difficulty": "Medium",
+                "question": "What is an algorithm?",
+                "options": [
+                    "A) A computer virus",
+                    "B) A programming language",
+                    "C) A step-by-step method for solving a problem",
+                    "D) A type of hardware"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "database",
+                "difficulty": "Medium",
+                "question": "What is a database mainly used for?",
+                "options": [
+                    "A) Storing and organizing data",
+                    "B) Drawing pictures",
+                    "C) Playing music",
+                    "D) Increasing screen brightness"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "recursion",
+                "difficulty": "Hard",
+                "question": "What happens in recursion?",
+                "options": [
+                    "A) A function calls itself",
+                    "B) A program deletes itself",
+                    "C) A loop stops immediately",
+                    "D) A variable becomes constant"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "encryption",
+                "difficulty": "Hard",
+                "question": "What is encryption mainly used for?",
+                "options": [
+                    "A) Compressing images",
+                    "B) Protecting information by converting it into coded form",
+                    "C) Increasing processor speed",
+                    "D) Creating computer games"
+                ],
+                "answer": "B"
+            }
+        ]
+    },
 
 
-subject = subjects[subject_choice]
+    "2": {
+        "name": "Biology",
 
-print("\n✅ Subject selected:", subject["name"])
+        "words": [
+
+            {
+                "word": "cell",
+                "difficulty": "Easy",
+                "question": "What is generally considered the basic unit of life?",
+                "options": [
+                    "A) Tissue",
+                    "B) Organ",
+                    "C) Cell",
+                    "D) Organ system"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "protein",
+                "difficulty": "Easy",
+                "question": "Proteins are made from which smaller units?",
+                "options": [
+                    "A) Fatty acids",
+                    "B) Amino acids",
+                    "C) Glucose",
+                    "D) Nucleotides"
+                ],
+                "answer": "B"
+            },
+
+            {
+                "word": "photosynthesis",
+                "difficulty": "Medium",
+                "question": "Which gas is taken in by plants during photosynthesis?",
+                "options": [
+                    "A) Oxygen",
+                    "B) Nitrogen",
+                    "C) Carbon dioxide",
+                    "D) Hydrogen"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "mitochondria",
+                "difficulty": "Medium",
+                "question": "Which molecule is commonly described as the main energy currency of cells?",
+                "options": [
+                    "A) ATP",
+                    "B) DNA",
+                    "C) RNA",
+                    "D) Glucose"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "chromosome",
+                "difficulty": "Hard",
+                "question": "What molecule carries most hereditary information in human chromosomes?",
+                "options": [
+                    "A) Protein",
+                    "B) DNA",
+                    "C) Lipid",
+                    "D) ATP"
+                ],
+                "answer": "B"
+            },
+
+            {
+                "word": "homeostasis",
+                "difficulty": "Hard",
+                "question": "What does homeostasis refer to?",
+                "options": [
+                    "A) Cell division",
+                    "B) Maintaining relatively stable internal conditions",
+                    "C) Production of hormones",
+                    "D) Movement of blood"
+                ],
+                "answer": "B"
+            }
+        ]
+    },
+
+
+    "3": {
+        "name": "Chemistry",
+
+        "words": [
+
+            {
+                "word": "atom",
+                "difficulty": "Easy",
+                "question": "Which particle has a negative electric charge?",
+                "options": [
+                    "A) Proton",
+                    "B) Neutron",
+                    "C) Electron",
+                    "D) Nucleus"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "element",
+                "difficulty": "Easy",
+                "question": "What does an element contain?",
+                "options": [
+                    "A) Only one type of atom",
+                    "B) Only molecules",
+                    "C) Two different compounds",
+                    "D) Only ions"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "molecule",
+                "difficulty": "Medium",
+                "question": "What is formed when two or more atoms chemically bond?",
+                "options": [
+                    "A) Molecule",
+                    "B) Electron",
+                    "C) Proton",
+                    "D) Neutron"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "catalyst",
+                "difficulty": "Medium",
+                "question": "What does a catalyst generally do?",
+                "options": [
+                    "A) Stops every reaction",
+                    "B) Increases activation energy",
+                    "C) Speeds up a reaction without being consumed",
+                    "D) Turns solids into gases"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "oxidation",
+                "difficulty": "Hard",
+                "question": "Which process is commonly associated with loss of electrons?",
+                "options": [
+                    "A) Reduction",
+                    "B) Oxidation",
+                    "C) Neutralization",
+                    "D) Condensation"
+                ],
+                "answer": "B"
+            },
+
+            {
+                "word": "equilibrium",
+                "difficulty": "Hard",
+                "question": "In chemical equilibrium, what is equal?",
+                "options": [
+                    "A) Reactant and product concentrations always",
+                    "B) Forward and reverse reaction rates",
+                    "C) Number of atoms and molecules",
+                    "D) Mass and volume"
+                ],
+                "answer": "B"
+            }
+        ]
+    },
+
+
+    "4": {
+        "name": "Mathematics",
+
+        "words": [
+
+            {
+                "word": "integer",
+                "difficulty": "Easy",
+                "question": "Which of these is an integer?",
+                "options": [
+                    "A) 3.5",
+                    "B) 1/2",
+                    "C) -7",
+                    "D) √2"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "algebra",
+                "difficulty": "Easy",
+                "question": "What is x if x + 5 = 12?",
+                "options": [
+                    "A) 5",
+                    "B) 6",
+                    "C) 7",
+                    "D) 8"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "matrix",
+                "difficulty": "Medium",
+                "question": "A matrix is mainly arranged using what?",
+                "options": [
+                    "A) Rows and columns",
+                    "B) Circles and lines",
+                    "C) Angles only",
+                    "D) Fractions only"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "derivative",
+                "difficulty": "Medium",
+                "question": "What is the derivative of x²?",
+                "options": [
+                    "A) x",
+                    "B) 2x",
+                    "C) x²",
+                    "D) 2"
+                ],
+                "answer": "B"
+            },
+
+            {
+                "word": "probability",
+                "difficulty": "Hard",
+                "question": "What is the probability of getting heads when a fair coin is tossed?",
+                "options": [
+                    "A) 0",
+                    "B) 1/4",
+                    "C) 1/2",
+                    "D) 1"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "differential",
+                "difficulty": "Hard",
+                "question": "Which operation is the reverse of differentiation?",
+                "options": [
+                    "A) Integration",
+                    "B) Multiplication",
+                    "C) Division",
+                    "D) Factorization"
+                ],
+                "answer": "A"
+            }
+        ]
+    },
+
+
+    "5": {
+        "name": "General Science",
+
+        "words": [
+
+            {
+                "word": "gravity",
+                "difficulty": "Easy",
+                "question": "What is the SI unit of force?",
+                "options": [
+                    "A) Joule",
+                    "B) Watt",
+                    "C) Newton",
+                    "D) Pascal"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "planet",
+                "difficulty": "Easy",
+                "question": "What does the Earth orbit?",
+                "options": [
+                    "A) The Moon",
+                    "B) The Sun",
+                    "C) Mars",
+                    "D) Jupiter"
+                ],
+                "answer": "B"
+            },
+
+            {
+                "word": "energy",
+                "difficulty": "Medium",
+                "question": "Which type of energy is associated with motion?",
+                "options": [
+                    "A) Kinetic energy",
+                    "B) Chemical energy",
+                    "C) Nuclear energy",
+                    "D) Sound energy"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "radiation",
+                "difficulty": "Medium",
+                "question": "Which type of radiation helps plants perform photosynthesis?",
+                "options": [
+                    "A) Visible light",
+                    "B) Radio waves",
+                    "C) Microwaves",
+                    "D) X-rays"
+                ],
+                "answer": "A"
+            },
+
+            {
+                "word": "ecosystem",
+                "difficulty": "Hard",
+                "question": "What does an ecosystem include?",
+                "options": [
+                    "A) Only animals",
+                    "B) Only plants",
+                    "C) Living organisms and their physical environment",
+                    "D) Only microorganisms"
+                ],
+                "answer": "C"
+            },
+
+            {
+                "word": "atmosphere",
+                "difficulty": "Hard",
+                "question": "Which gas makes up the largest portion of Earth's atmosphere?",
+                "options": [
+                    "A) Oxygen",
+                    "B) Nitrogen",
+                    "C) Carbon dioxide",
+                    "D) Hydrogen"
+                ],
+                "answer": "B"
+            }
+        ]
+    }
+}
 
 
 # ============================================================
-#                     GAME SETTINGS
+#                    HELPER FUNCTIONS
+# ============================================================
+
+def display_word(word, guessed_letters):
+    display = ""
+
+    for letter in word:
+        if letter in guessed_letters:
+            display += letter.upper() + " "
+        else:
+            display += "_ "
+
+    return display
+
+
+def reveal_letter(word, guessed_letters):
+    unguessed = []
+
+    for letter in word:
+        if letter not in guessed_letters:
+            unguessed.append(letter)
+
+    if len(unguessed) == 0:
+        return None
+
+    letter = random.choice(unguessed)
+    guessed_letters.append(letter)
+
+    return letter
+
+
+def choose_subject():
+    print("\n" + "=" * 60)
+    print("                    📚 SUBJECTS")
+    print("=" * 60)
+
+    print("1. 💻 Computer Science")
+    print("2. 🧬 Biology")
+    print("3. 🧪 Chemistry")
+    print("4. 📐 Mathematics")
+    print("5. 🌌 General Science")
+    print("6. 🎲 Random Subject")
+
+    while True:
+        choice = input("\nChoose your favourite subject (1-6): ").strip()
+
+        if choice in subjects:
+            return choice
+
+        elif choice == "6":
+            return random.choice(list(subjects.keys()))
+
+        else:
+            print("❌ Please enter a number from 1 to 6.")
+
+
+def choose_difficulty():
+    print("\n" + "=" * 60)
+    print("                  🎚️ DIFFICULTY")
+    print("=" * 60)
+
+    print("1. 🟢 Easy")
+    print("2. 🟡 Medium")
+    print("3. 🔴 Hard")
+    print("4. 🎲 Mixed")
+
+    while True:
+        choice = input("\nChoose difficulty (1-4): ").strip()
+
+        if choice == "1":
+            return "Easy"
+
+        elif choice == "2":
+            return "Medium"
+
+        elif choice == "3":
+            return "Hard"
+
+        elif choice == "4":
+            return "Mixed"
+
+        else:
+            print("❌ Please enter 1, 2, 3 or 4.")
+
+
+def choose_question(word_data):
+    print("\n" + "=" * 60)
+    print("                    🧠 BONUS QUESTION")
+    print("=" * 60)
+
+    print("\n" + word_data["question"])
+
+    for option in word_data["options"]:
+        print(option)
+
+    while True:
+
+        answer = input("\nYour answer (A/B/C/D): ").upper().strip()
+
+        if answer in ["A", "B", "C", "D"]:
+            break
+
+        print("❌ Please enter only A, B, C or D.")
+
+    if answer == word_data["answer"]:
+
+        print("\n✅ Correct!")
+        print("🎁 You earned a FREE HINT!")
+
+        return True
+
+    else:
+
+        print("\n❌ Incorrect.")
+        print("No hint bonus this time.")
+
+        return False
+
+
+# ============================================================
+#                     WELCOME
+# ============================================================
+
+print("=" * 60)
+print("                    🔐 WORDLOCK")
+print("              SUBJECT CHALLENGE HANGMAN")
+print("=" * 60)
+
+print("\nWelcome to WORDLOCK! 🎮")
+print("Choose a subject, answer questions and solve hidden words.")
+print("You have 5 ❤️ hearts in every round.")
+
+player_name = input("\nEnter your name: ").strip()
+
+if player_name == "":
+    player_name = "Player"
+
+
+# ============================================================
+#                     CHOOSE SUBJECT
+# ============================================================
+
+subject_choice = choose_subject()
+
+subject_name = subjects[subject_choice]["name"]
+
+print("\n✅ Selected Subject:", subject_name)
+
+
+# ============================================================
+#                    CHOOSE DIFFICULTY
+# ============================================================
+
+difficulty = choose_difficulty()
+
+print("✅ Difficulty:", difficulty)
+
+
+# ============================================================
+#                    GAME VARIABLES
 # ============================================================
 
 score = 0
@@ -359,39 +767,63 @@ used_words = []
 
 
 # ============================================================
-#                     MAIN GAME
+#                    MAIN GAME LOOP
 # ============================================================
 
 while True:
 
-    # Stop if all words have been used
+    # Create available word list
     available_words = []
 
-    for item in subject["words"]:
-        if item["word"] not in used_words:
-            available_words.append(item)
+    for item in subjects[subject_choice]["words"]:
 
+        if item["word"] not in used_words:
+
+            if difficulty == "Mixed":
+
+                available_words.append(item)
+
+            elif item["difficulty"] == difficulty:
+
+                available_words.append(item)
+
+    # If all words of chosen difficulty are finished
     if len(available_words) == 0:
-        print("\n🎉 You have completed all available words!")
+
+        print("\n🎉 There are no more words in this difficulty!")
+
+        if difficulty != "Mixed":
+
+            print("You can continue with Mixed difficulty.")
+
+            change = input(
+                "\nSwitch to Mixed difficulty? (y/n): "
+            ).lower().strip()
+
+            if change == "y":
+                difficulty = "Mixed"
+                continue
+
         break
 
-    round_number += 1
 
-    # Select random word
+    # Choose random word
     selected = random.choice(available_words)
 
     word = selected["word"]
-    question = selected["question"]
-    hint = selected["hint"]
 
     used_words.append(word)
 
     guessed_letters = []
 
     wrong_guesses = 0
+
     max_wrong = 5
 
     hint_used = False
+
+    round_number += 1
+
 
     # ========================================================
     #                    ROUND START
@@ -399,55 +831,56 @@ while True:
 
     print("\n")
     print("=" * 60)
-    print("                 🔐 ROUND", round_number)
+    print("                    🔐 ROUND", round_number)
     print("=" * 60)
 
-    print("\n📚 Subject:", subject["name"])
+    print("Subject   :", subject_name)
+    print("Difficulty:", selected["difficulty"])
 
-    print("\n🧠 QUESTION")
-    print("-" * 60)
-    print(question)
-
-    input("\nPress ENTER when you are ready to start guessing...")
 
     # ========================================================
-    #                    WORD GAME
+    #                    BONUS QUESTION
+    # ========================================================
+
+    free_hint = choose_question(selected)
+
+    if free_hint:
+
+        revealed = reveal_letter(word, guessed_letters)
+
+        if revealed is not None:
+            print("💡 A letter has been revealed:", revealed.upper())
+
+
+    # ========================================================
+    #                     HANGMAN LOOP
     # ========================================================
 
     while wrong_guesses < max_wrong:
 
         print("\n" + "=" * 60)
 
-        # Hearts
         hearts = "❤️ " * (max_wrong - wrong_guesses)
         empty_hearts = "🖤 " * wrong_guesses
 
         print("HEARTS:", hearts + empty_hearts)
 
-        # Hangman
         print(hangman[wrong_guesses])
 
-        # Display hidden word
-        display = ""
+        print("WORD:", display_word(word, guessed_letters))
 
-        for letter in word:
 
-            if letter in guessed_letters:
-                display += letter.upper() + " "
-
-            else:
-                display += "_ "
-
-        print("\nWORD:", display)
-
-        # Show guessed letters
         if len(guessed_letters) > 0:
-            print("Guessed letters:", " ".join(
-                guessed_letters).upper())
 
-        # ----------------------------------------------------
-        # Check whether the word has been completed
-        # ----------------------------------------------------
+            print(
+                "Guessed:",
+                " ".join(guessed_letters).upper()
+            )
+
+
+        # ====================================================
+        #                    WIN CHECK
+        # ====================================================
 
         complete = True
 
@@ -455,85 +888,96 @@ while True:
 
             if letter not in guessed_letters:
                 complete = False
+                break
+
 
         if complete:
 
-            print("\n🎉🎉 YOU SOLVED IT! 🎉🎉")
+            print("\n🎉🎉 YOU WON! 🎉🎉")
             print("The word was:", word.upper())
 
-            # Score
-            round_score = 100 - (wrong_guesses * 10)
+            bonus = 50
 
-            if not hint_used:
-                round_score += 25
+            if wrong_guesses == 0:
+                bonus += 30
 
-            if round_score < 0:
-                round_score = 0
+                print("🔥 Perfect round bonus: +30")
 
-            score += round_score
+            score += bonus
             words_won += 1
 
-            print("⭐ Round Score:", round_score)
-            print("🏆 Total Score:", score)
+            print("⭐ Round bonus:", bonus)
+            print("🏆 Current score:", score)
 
             break
 
-        # ----------------------------------------------------
-        # Game options
-        # ----------------------------------------------------
+
+        # ====================================================
+        #                    ACTION MENU
+        # ====================================================
 
         print("\nChoose an action:")
+
         print("1. 🔤 Guess a letter")
         print("2. 💡 Use hint")
         print("3. 🎯 Guess the whole word")
         print("4. 🚪 Quit game")
 
-        action = input("\nEnter choice: ")
+
+        action = input("\nEnter choice: ").strip()
+
 
         # ====================================================
-        # GUESS LETTER
+        #                    LETTER GUESS
         # ====================================================
 
         if action == "1":
 
-            guess = input("\nEnter one letter: ").lower().strip()
+            guess = input(
+                "\nEnter one letter: "
+            ).lower().strip()
 
-            # Validation
+
             if len(guess) != 1:
 
-                print("❌ Please enter exactly ONE letter.")
+                print("❌ Enter exactly ONE letter.")
                 continue
+
 
             if not guess.isalpha():
 
-                print("❌ Please enter a letter only.")
+                print("❌ Letters only.")
                 continue
+
 
             if guess in guessed_letters:
 
                 print("⚠️ You already guessed that letter.")
                 continue
 
+
             guessed_letters.append(guess)
 
-            # Correct
+
             if guess in word:
 
-                print("✅ Correct guess!")
+                print("✅ Correct!")
 
-                # Bonus
                 score += 10
 
-            # Wrong
+                print("⭐ +10 points")
+
             else:
 
                 wrong_guesses += 1
 
                 print("❌ Wrong guess!")
+
                 print("You lost one ❤️ heart.")
 
+
         # ====================================================
-        # USE HINT
+        #                       HINT
         # ====================================================
 
         elif action == "2":
@@ -546,69 +990,92 @@ while True:
 
                 hint_used = True
 
-                print("\n💡 HINT")
-                print("-" * 40)
-                print(hint)
+                revealed = reveal_letter(
+                    word,
+                    guessed_letters
+                )
 
-                print("\n⚠️ Hint penalty: -20 points")
+                if revealed is not None:
 
-                score -= 20
+                    print("\n💡 HINT!")
+                    print(
+                        "The letter",
+                        revealed.upper(),
+                        "has been revealed."
+                    )
 
-                if score < 0:
-                    score = 0
+                    score -= 10
+
+                    if score < 0:
+                        score = 0
+
+                    print("⚠️ Hint cost: 10 points")
+
 
         # ====================================================
-        # GUESS WHOLE WORD
+        #                  WHOLE WORD GUESS
         # ====================================================
 
         elif action == "3":
 
             full_guess = input(
-                "\nEnter your guess for the whole word: "
+                "\nEnter the complete word: "
             ).lower().strip()
+
 
             if full_guess == word:
 
-                print("\n🎉 AMAZING! You guessed the entire word!")
+                print("\n🎉 AMAZING!")
+                print("You guessed the complete word!")
 
-                round_score = 150
+                score += 60
 
-                if hint_used:
-                    round_score -= 20
-
-                score += round_score
                 words_won += 1
 
-                print("⭐ Round Score:", round_score)
-                print("🏆 Total Score:", score)
+                print("⭐ +60 points")
 
                 break
 
             else:
 
-                print("❌ Wrong answer!")
+                print("❌ Wrong word!")
 
                 wrong_guesses += 1
 
+                print("You lost one ❤️ heart.")
+
+
         # ====================================================
-        # QUIT
+        #                       QUIT
         # ====================================================
 
         elif action == "4":
 
             print("\n👋 Thanks for playing WORDLOCK!")
 
-            print("\nFinal Score:", score)
+            print("Your current score:", score)
+
+            save_score(
+                player_name,
+                subject_name,
+                score
+            )
+
+            print("✅ Score saved!")
+
+            show_leaderboard()
 
             exit()
 
+
         # ====================================================
-        # INVALID OPTION
+        #                    INVALID ACTION
         # ====================================================
 
         else:
 
-            print("❌ Invalid option. Choose 1, 2, 3 or 4.")
+            print("❌ Choose 1, 2, 3 or 4.")
+
 
     # ========================================================
     #                    GAME OVER
@@ -626,6 +1093,7 @@ while True:
 
         words_lost += 1
 
+
     # ========================================================
     #                    NEXT ROUND
     # ========================================================
@@ -637,51 +1105,55 @@ while True:
     print("1. ▶️ Yes")
     print("2. 🚪 No")
 
-    again = input("\nEnter choice: ")
+    again = input("\nEnter choice: ").strip()
 
     if again != "1":
         break
 
 
 # ============================================================
-#                     FINAL RESULTS
+#                    FINAL RESULTS
 # ============================================================
 
 print("\n")
-print("=" * 60)
+print("-" * 60)
 print("                 🏆 FINAL RESULTS")
-print("=" * 60)
+print("-" * 60)
 
-print("\n📚 Subject:", subject["name"])
-print("🎯 Rounds played:", round_number)
-print("✅ Words solved:", words_won)
-print("❌ Words missed:", words_lost)
-print("⭐ Final Score:", score)
+print("\nPlayer          :", player_name)
+print("Subject         :", subject_name)
+print("Difficulty      :", difficulty)
+print("Rounds played   :", round_number)
+print("Words solved    :", words_won)
+print("Words missed    :", words_lost)
+print("Final Score     :", score)
 
-player_name = input("\nEnter your name for the leaderboard: ")
+rank = get_rank(score)
 
-save_score(player_name, score)
+print("Rank            :", rank)
 
-print("✅ Score saved successfully!")
+
+# ============================================================
+#                    SAVE SCORE
+# ============================================================
+
+save_score(
+    player_name,
+    subject_name,
+    score
+)
+
+print("\n✅ Your score has been saved to the leaderboard!")
+
+
+# ============================================================
+#                    SHOW LEADERBOARD
+# ============================================================
 
 show_leaderboard()
 
-# Rank system
-if score >= 600:
-    rank = "🏆 WORDLOCK MASTER"
-
-elif score >= 400:
-    rank = "🥇 EXPERT PLAYER"
-
-elif score >= 200:
-    rank = "🥈 SKILLED PLAYER"
-
-else:
-    rank = "🥉 ROOKIE PLAYER"
-
-print("\nYour Rank:", rank)
 
 print("\n" + "-" * 60)
-print("          🔐 THANK YOU FOR PLAYING")
-print("               WORDLOCK")
+print("             🔐 THANK YOU FOR PLAYING")
+print("                    WORDLOCK")
 print("-" * 60)
